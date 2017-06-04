@@ -55,7 +55,8 @@ getPosition ( Piece pos _ ) = pos
 
 -- ***
 -- Flip a piece over
---flipPiece :: Piece -> Piece
+flipPiece :: Piece -> Piece
+flipPiece (Piece pos player) = (Piece pos (otherPlayer player))
 
 
 -- Board type and utility functions
@@ -96,15 +97,18 @@ pieceAt pos (x:xs)
 -- (1) no two pieces can occupy the same space, and 
 -- (2) at least one of the other player's pieces must be flipped by the placement of the new piece.
 validMove :: Piece -> Board -> Bool
-validMove (Piece pos _) board
+validMove (Piece pos player) board
 					| isOccupied pos board = False
+					| null (toFlip (Piece pos player) board) = False
 					| otherwise = True
 
 
 -- ***
 -- Determine which pieces would be flipped by the placement of a new piece
-{-toFlip :: Piece -> Board -> [Piece]
-toFlip piece board =-}
+toFlip :: Piece -> Board -> [Piece]
+toFlip piece board = concat (
+		map flippable (map (getLineDir piece board) [(0,1), (0,-1), (1,0), (-1,0), (1,1), (1,-1), (-1,-1), (-1,1)])
+	)
 
 -- ***
 -- Auxillary function for toFlip. 
@@ -119,16 +123,15 @@ toFlip piece board =-}
 -- or a list where the last piece belongs to the player of the hypothetical piece.  
 -- Only in the last case can any of the pieces be flipped.
 
-getLineDir :: (Int, Int) -> Piece -> Board -> [Piece]
-getLineDir (dx, dy) (Piece (x, y) player) board    
+getLineDir :: Piece -> Board -> (Int, Int) -> [Piece]
+getLineDir (Piece (x, y) player) board (dx, dy)
                     | isValidPos (x,y) == False = []
                     | otherwise = 
                         case pieceAt (x+dx, y+dy) board of
                             Just p ->   if playerOf p == player
-                                            [p]
-                                        else p:(getLineDir (dx, dy) ( Piece (x+dx, y+dy) player ) board)
+                                            then [p]
+                                        else p:(getLineDir ( Piece (x+dx, y+dy) player ) board (dx, dy))
                             Nothing -> []
-
 
 
 -- ***
@@ -137,11 +140,32 @@ getLineDir (dx, dy) (Piece (x, y) player) board
 -- Given the output from getLineDir, determine which, if any, of the pieces would be flipped.
 
 flippable :: [Piece] -> [Piece]
+-- case 1 the neighbour is empty
+flippable [] = []	
+-- case 2 there is no neighbouring opponent pieces
+flippable (x:[]) = [] 
+-- case 3 the start is diff from end: inbetween flippable
+flippable pieces 
+			| head pieces /= last pieces = init pieces
+			| otherwise = []
 
 -- ***
 -- Place a new piece on the board.  Assumes that it constitutes a validMove
 makeMove :: Piece -> Board -> Board
-makeMove p b = p:b
+makeMove piece xs = [if (p `elem` match) then flipPiece p else p | p <- pieces] 
+					where
+						match = (toFlip piece xs)
+						pieces = piece:xs
+
+{-makeMove piece [] = [piece]
+makeMove piece (x:xs) =
+		case (elemIndex x match) of
+			Just a -> flip:(makeMove piece xs)
+			Nothing -> x:(makeMove piece xs)
+			where 
+				flip = (flipPiece x)
+				match = (toFlip x (x:xs))
+-}
 
 -- ***
 -- Find all valid moves for a particular player

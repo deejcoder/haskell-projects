@@ -177,13 +177,29 @@ isValidPos (x,y) 	| x <= 7 && x >= 0 && y <= 7 && y >= 0 = True
 playerOf :: Piece -> Player
 playerOf ( Piece _ player ) = player
 
-getDirLine :: (Int, Int) -> Piece -> Board -> [Piece]
-getDirLine (dx, dy) (Piece (x, y) player) board    
+-- Determine which pieces would be flipped by the placement of a new piece
+toFlip :: Piece -> Board -> [Piece]
+toFlip piece board = concat (
+		map flippable (map (getLineDir piece board) [(0,1), (0,-1), (1,0), (-1,0), (1,1), (1,-1), (-1,-1), (-1,1)])
+	)
+
+getLineDir :: Piece -> Board -> (Int, Int) -> [Piece]
+getLineDir (Piece (x, y) player) board (dx, dy)
                     | isValidPos (x,y) == False = []
                     | otherwise = 
                         case pieceAt (x+dx, y+dy) board of
                             Just p ->   if playerOf p == player
                                             then [p]
-                                        else p:(getDirLine (dx, dy) ( Piece (x+dx, y+dy) player ) board)
+                                        else p:(getLineDir ( Piece (x+dx, y+dy) player ) board (dx, dy))
                             Nothing -> []
 
+
+flippable :: [Piece] -> [Piece]
+-- case 1 the neighbour is empty
+flippable [] = []	
+-- case 2 there is no neighbouring opponent pieces
+flippable (x:[]) = [] 
+-- case 3 the start is diff from end: inbetween flippable
+flippable pieces 
+			| head pieces /= last pieces = init pieces
+			| otherwise = []
