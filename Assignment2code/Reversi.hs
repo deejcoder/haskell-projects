@@ -28,7 +28,7 @@ otherPlayer PlayerWhite = PlayerBlack
 data Piece = Piece Position Player deriving (Eq)
 instance Show Piece where
 	show (Piece _ PlayerWhite) = " W"
-	show (Piece _ PlayerBlack) = " B"
+	show (Piece _ PlayerBlack) = " B" 
 
 -- ***
 -- Given a Player value and a Piece value, does this piece belong to the player?
@@ -146,31 +146,28 @@ flippable [] = []
 flippable (x:[]) = [] 
 -- case 3 the start is diff from end: inbetween flippable
 flippable pieces 
-			| head pieces /= last pieces = init pieces
+			| playerOf (head pieces) /= playerOf (last pieces) = init pieces
 			| otherwise = []
 
 -- ***
 -- Place a new piece on the board.  Assumes that it constitutes a validMove
 makeMove :: Piece -> Board -> Board
-makeMove piece xs = [if (p `elem` match) then flipPiece p else p | p <- pieces] 
+makeMove piece xs | validMove piece xs == False = []
+				   | otherwise =  [if (p `elem` match) then flipPiece p else p | p <- pieces] 
 					where
 						match = (toFlip piece xs)
 						pieces = piece:xs
 
-{-makeMove piece [] = [piece]
-makeMove piece (x:xs) =
-		case (elemIndex x match) of
-			Just a -> flip:(makeMove piece xs)
-			Nothing -> x:(makeMove piece xs)
-			where 
-				flip = (flipPiece x)
-				match = (toFlip x (x:xs))
--}
 
 -- ***
 -- Find all valid moves for a particular player
 allMoves :: Player -> Board -> [Piece]
-allMoves p b = b ++ [Piece (1,1) PlayerWhite]
+allMoves player board = [Piece (x,y) player | x <- [0..7], y <- [0..7], validMove (Piece (x,y) player ) board]
+
+allMovesPos :: Player -> Board -> IO ()
+allMovesPos player (x:xs) = do {putStrLn (show (getPosition x) );
+								putStrLn (show ( playerOf x ) );
+								allMovesPos player xs}
 
 -- ***
 -- Count the number of pieces belonging to a player
