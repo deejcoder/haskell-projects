@@ -153,23 +153,37 @@ strlen = do putStr "Enter a string: "
 
 type Position = (Int, Int)
 data Player = PlayerWhite | PlayerBlack deriving (Eq)
-instance Show Player where
-	show PlayerWhite = "white"
-	show PlayerBlack  = "black"
 data Piece = Piece Position Player deriving (Eq)
-class IsPos Piece where
-    (==) :: 
-    (Piece pos1 _ ) == (Piece pos2 _ ) = pos1 == pos2
-
+instance Show Piece where
+	show (Piece _ PlayerWhite) = " W"
+	show (Piece _ PlayerBlack) = " B"
 type Board = [Piece]
 
-initialBoard :: Board
-initialBoard =
-	[
-		Piece (3,4) PlayerWhite, Piece (4,4) PlayerBlack,
-		Piece (3,3) PlayerBlack, Piece (4,3) PlayerWhite
-	]
+getPosition :: Piece -> Position
+getPosition ( Piece pos _ ) = pos
 
-printp :: Piece -> Piece -> Bool
-printp p1 p2 = p1 IsPos p2
+
+pieceAt :: Position -> Board -> Maybe Piece
+pieceAt pos [] = Nothing
+pieceAt pos (x:xs)
+				| getPosition x == pos = Just x
+				| otherwise = pieceAt pos xs
+
+isValidPos :: Position -> Bool
+isValidPos (x,y) 	| x <= 7 && x >= 0 && y <= 7 && y >= 0 = True
+					| otherwise = False
+
+
+playerOf :: Piece -> Player
+playerOf ( Piece _ player ) = player
+
+getDirLine :: (Int, Int) -> Piece -> Board -> [Piece]
+getDirLine (dx, dy) (Piece (x, y) player) board    
+                    | isValidPos (x,y) == False = []
+                    | otherwise = 
+                        case pieceAt (x+dx, y+dy) board of
+                            Just p ->   if playerOf p == player
+                                            then [p]
+                                        else p:(getDirLine (dx, dy) ( Piece (x+dx, y+dy) player ) board)
+                            Nothing -> []
 

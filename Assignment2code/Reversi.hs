@@ -103,7 +103,8 @@ validMove (Piece pos _) board
 
 -- ***
 -- Determine which pieces would be flipped by the placement of a new piece
---toFlip :: Piece -> Board -> [Piece]
+{-toFlip :: Piece -> Board -> [Piece]
+toFlip piece board =-}
 
 -- ***
 -- Auxillary function for toFlip. 
@@ -118,14 +119,24 @@ validMove (Piece pos _) board
 -- or a list where the last piece belongs to the player of the hypothetical piece.  
 -- Only in the last case can any of the pieces be flipped.
 
---getLineDir :: (Int, Int) -> Piece -> Board -> [Piece]
+getLineDir :: (Int, Int) -> Piece -> Board -> [Piece]
+getLineDir (dx, dy) (Piece (x, y) player) board    
+                    | isValidPos (x,y) == False = []
+                    | otherwise = 
+                        case pieceAt (x+dx, y+dy) board of
+                            Just p ->   if playerOf p == player
+                                            [p]
+                                        else p:(getLineDir (dx, dy) ( Piece (x+dx, y+dy) player ) board)
+                            Nothing -> []
+
+
 
 -- ***
 -- Auxillary function for toFlip.
 -- You don't have to use this function if you prefer to define toFlip some other way.
 -- Given the output from getLineDir, determine which, if any, of the pieces would be flipped.
 
---flippable :: [Piece] -> [Piece]
+flippable :: [Piece] -> [Piece]
 
 -- ***
 -- Place a new piece on the board.  Assumes that it constitutes a validMove
