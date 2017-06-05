@@ -8,8 +8,9 @@ type Position = (Int, Int)
 -- ***
 -- Given a Position value, determine whether or not it is a legal position on the board
 isValidPos :: Position -> Bool
-isValidPos (x,y) 	| x <= 7 && x >= 0 && y <= 7 && y >= 0 = True
-					| otherwise = False
+isValidPos (x,y)
+	| x <= 7 && x >= 0 && y <= 7 && y >= 0 = True
+	| otherwise = False
 
 
 -- Player type and utility functions
@@ -30,12 +31,17 @@ instance Show Piece where
 	show (Piece _ PlayerWhite) = " W"
 	show (Piece _ PlayerBlack) = " B" 
 
+	{- used these for debugging;
+	show (Piece pos PlayerWhite) = " W" ++ show pos
+	show (Piece pos PlayerBlack) = " B" ++ show pos
+	-}
+
 -- ***
 -- Given a Player value and a Piece value, does this piece belong to the player?
 isPlayer :: Player -> Piece -> Bool
 isPlayer player (Piece _ pplayer ) 
-					| player == pplayer = True
-					| otherwise = False
+	| player == pplayer = True
+	| otherwise = False
 
 {-
 
@@ -66,8 +72,8 @@ type Board = [Piece]
 initialBoard :: Board
 initialBoard =
 	[
-		Piece (3,4) PlayerWhite, Piece (4,4) PlayerBlack,
-		Piece (3,3) PlayerBlack, Piece (4,3) PlayerWhite
+		Piece (3,4) PlayerBlack, Piece (4,4) PlayerWhite,
+		Piece (3,3) PlayerWhite, Piece (4,3) PlayerBlack
 	]
 
 
@@ -78,8 +84,9 @@ initialBoard =
 
 isOccupied :: Position -> Board -> Bool
 isOccupied pos [] = False
-isOccupied pos (x:xs) 	| getPosition x == pos = True
-						| otherwise = isOccupied pos xs
+isOccupied pos (x:xs)
+	| getPosition x == pos = True
+	| otherwise = isOccupied pos xs
 
 -- ***
 -- Which piece is at a given position? 
@@ -89,25 +96,30 @@ isOccupied pos (x:xs) 	| getPosition x == pos = True
 pieceAt :: Position -> Board -> Maybe Piece
 pieceAt pos [] = Nothing
 pieceAt pos (x:xs)
-				| getPosition x == pos = Just x
-				| otherwise = pieceAt pos xs
+	| getPosition x == pos = Just x
+	| otherwise = pieceAt pos xs
 
 -- ***
 -- Determine if a particular piece can be placed on a board.  
 -- There are two conditions: 
 -- (1) no two pieces can occupy the same space, and 
 -- (2) at least one of the other player's pieces must be flipped by the placement of the new piece.
+-------- checking if the flippable pieces is zero (null [a])
 validMove :: Piece -> Board -> Bool
 validMove (Piece pos player) board
-					| isOccupied pos board = False
-					| null (toFlip (Piece pos player) board) = False
-					| otherwise = True
+	| isOccupied pos board = False
+	| null (toFlip (Piece pos player) board) = False
+	| otherwise = True
 
 
 -- ***
 -- Determine which pieces would be flipped by the placement of a new piece
+-- 1. Apply all directions to getLineDir
+-- 2. Apply all directions returned by getLineDir, to flippable
+-- 3. Merge all items in the nested list, into a single list
 toFlip :: Piece -> Board -> [Piece]
-toFlip piece board = concat (
+toFlip piece board = 
+	concat (
 		map flippable (map (getLineDir piece board) [(0,1), (0,-1), (1,0), (-1,0), (1,1), (1,-1), (-1,-1), (-1,1)])
 	)
 
@@ -126,57 +138,67 @@ toFlip piece board = concat (
 
 getLineDir :: Piece -> Board -> (Int, Int) -> [Piece]
 getLineDir (Piece (x, y) player) board (dx, dy)
-                    | isValidPos (x,y) == False = []
-                    | otherwise = 
-                        case pieceAt (x+dx, y+dy) board of
-                            Just p ->   if playerOf p == player
-                                            then [p]
-                                        else p:(getLineDir ( Piece (x+dx, y+dy) player ) board (dx, dy))
-                            Nothing -> []
+	| isValidPos (x,y) == False = []
+	| otherwise = 
+		case pieceAt (x+dx, y+dy) board of
+			Just p ->
+				if playerOf p == player
+					then [p]
+				else p:(getLineDir ( Piece (x+dx, y+dy) player ) board (dx, dy))
+			Nothing -> []
 
 
 -- ***
 -- Auxillary function for toFlip.
 -- You don't have to use this function if you prefer to define toFlip some other way.
 -- Given the output from getLineDir, determine which, if any, of the pieces would be flipped.
-
-flippable :: [Piece] -> [Piece]
 -- case 1 the neighbour is empty
-flippable [] = []	
 -- case 2 there is no neighbouring opponent pieces
+-- case 3 the start is diff from end: in between flippable - in terms of players
+flippable :: [Piece] -> [Piece]
+flippable [] = []	
 flippable (x:[]) = [] 
--- case 3 the start is diff from end: inbetween flippable
 flippable pieces 
-			| playerOf (head pieces) /= playerOf (last pieces) = init pieces
-			| otherwise = []
+	| playerOf (head pieces) /= playerOf (last pieces) = init pieces
+	| otherwise = []
 
 -- ***
 -- Place a new piece on the board.  Assumes that it constitutes a validMove
+-- Appending the piece to be added, at the bottom as 'pieces'
 makeMove :: Piece -> Board -> Board
-makeMove piece xs | validMove piece xs == False = []
-				   | otherwise =  [if (p `elem` match) then flipPiece p else p | p <- pieces] 
-					where
-						match = (toFlip piece xs)
-						pieces = piece:xs
+makeMove piece xs
+	| validMove piece xs == False = []
+	| otherwise =  [if (p `elem` match) then flipPiece p else p | p <- pieces] 
+	where
+		match = (toFlip piece xs)
+		pieces = piece:xs
 
 
 -- ***
 -- Find all valid moves for a particular player
+-- An advanced method, I would do two cases;
+-- 1. if the board is over half filled, I would use the list comprehension below,
+-- 2. otherwise I would examine all pieces for unoccupied positions and testify validity
 allMoves :: Player -> Board -> [Piece]
 allMoves player board = [Piece (x,y) player | x <- [0..7], y <- [0..7], validMove (Piece (x,y) player ) board]
 
+-- Used this for debugging
+{-
 allMovesPos :: Player -> Board -> IO ()
-allMovesPos player (x:xs) = do {putStrLn (show (getPosition x) );
-								putStrLn (show ( playerOf x ) );
-								allMovesPos player xs}
+allMovesPos player (x:xs) =
+	do {putStrLn (show (getPosition x) );
+		putStrLn (show ( playerOf x ) );
+		allMovesPos player xs}
+-}
 
 -- ***
 -- Count the number of pieces belonging to a player
 score :: Player -> Board -> Int
 score p [] = 0
-score p (x:xs) 	| show x == " B" && p == PlayerBlack = 1 + score p xs
-				| show x == " W" && p == PlayerWhite = 1 + score p xs
-				| otherwise = score p xs
+score p (x:xs)
+	| show x == " B" && p == PlayerBlack = 1 + score p xs
+	| show x == " W" && p == PlayerWhite = 1 + score p xs
+	| otherwise = score p xs
 
 
 

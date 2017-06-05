@@ -46,8 +46,8 @@ movePlayer (Root (Game (Piece _ player) _) _) = player
 -- worth more than edges which are worth more than other positions.
 estimate :: Player -> Game -> Int
 estimate player (Game _ board) = 
-	score player board
-	+ estimateCount player board
+    score player board
+    + estimateCount player board
 	
 --Using recursion is more efficient than list comprehension (with length, or summing) although messier
 --Case 1: players don't correspond to player, continue to the next item
@@ -57,10 +57,10 @@ estimate player (Game _ board) =
 estimateCount :: Player -> Board -> Int
 estimateCount player [] = 0
 estimateCount player ((Piece pos player'):xs)
-	| player /= player' = estimateCount player xs
-	| isCorner pos = 2 + (estimateCount player xs)
-	| isEdge pos = 1 + (estimateCount player xs)
-	| otherwise = estimateCount player xs
+    | player /= player' = estimateCount player xs
+    | isCorner pos = 2 + (estimateCount player xs)
+    | isEdge pos = 1 + (estimateCount player xs)
+    | otherwise = estimateCount player xs
 
 
 {- using list comprehension
@@ -71,13 +71,13 @@ occupiedCorners player board = sum (
 
 isCorner :: Position -> Bool
 isCorner pos
-	| pos == (0,0) || pos == (7,7) || pos == (0,7) || pos == (7,0) = True
-	| otherwise = False
+    | pos == (0,0) || pos == (7,7) || pos == (0,7) || pos == (7,0) = True
+    | otherwise = False
 
 isEdge :: Position -> Bool
 isEdge (x,y)
-	| x == 0 || x == 7 || y == 0 || y == 7 = True
-	| otherwise = False 
+    | x == 0 || x == 7 || y == 0 || y == 7 = True
+    | otherwise = False 
 
 {- ...when you forget you must also determine if it's the same player probably less efficient anyway
 occupiedCorners :: Board -> Int
