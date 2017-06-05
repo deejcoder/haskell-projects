@@ -80,6 +80,7 @@ isOccupied :: Position -> Board -> Bool
 isOccupied pos [] = False
 isOccupied pos (x:xs) 	| getPosition x == pos = True
 						| otherwise = isOccupied pos xs
+
 -- ***
 -- Which piece is at a given position? 
 -- Return Nothing in the case that there is no piece at the position

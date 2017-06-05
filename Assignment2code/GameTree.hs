@@ -45,7 +45,49 @@ movePlayer (Root (Game (Piece _ player) _) _) = player
 -- This could be modified to account for strategic concerns, e.g. corners are
 -- worth more than edges which are worth more than other positions.
 estimate :: Player -> Game -> Int
-estimate player (Game _ board) = score player board
+estimate player (Game _ board) = 
+	score player board
+	+ estimateCount player board
+	
+--Using recursion is more efficient than list comprehension (with length, or summing) although messier
+--Case 1: players don't correspond to player, continue to the next item
+--Case 2: it's a corner, valued at score two
+--Case 3: if it's not a corner, is it an edge as a corner is a subset of the edges
+--Case 4: it must be a position in the middle
+estimateCount :: Player -> Board -> Int
+estimateCount player [] = 0
+estimateCount player ((Piece pos player'):xs)
+	| player /= player' = estimateCount player xs
+	| isCorner pos = 2 + (estimateCount player xs)
+	| isEdge pos = 1 + (estimateCount player xs)
+	| otherwise = estimateCount player xs
+
+
+{- using list comprehension
+occupiedCorners player board = sum (
+		[1 | (Piece pos p) <- board, (isCorner pos) && (p == player)]
+	)
+-}
+
+isCorner :: Position -> Bool
+isCorner pos
+	| pos == (0,0) || pos == (7,7) || pos == (0,7) || pos == (7,0) = True
+	| otherwise = False
+
+isEdge :: Position -> Bool
+isEdge (x,y)
+	| x == 0 || x == 7 || y == 0 || y == 7 = True
+	| otherwise = False 
+
+{- ...when you forget you must also determine if it's the same player probably less efficient anyway
+occupiedCorners :: Board -> Int
+occupiedCorners board = 
+	foldr (\corner -> case (isOccupied corner board) of
+				True -> (+1)
+				False -> (+0)
+	) 0 [(0,7), (7,0), (7,7), (0,0)]
+
+-}
 
 -- Maximise or minimise the value of a game tree, depending on whose move it is
 minimax :: Player -> Tree Game -> Int
