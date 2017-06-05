@@ -182,13 +182,21 @@ score p (x:xs) 	| show x == " B" && p == PlayerBlack = 1 + score p xs
 -- ***
 -- Decide whether or not the game is over. The game is over when neither player can make a validMove
 isGameOver :: Board -> Bool
-isGameOver b = False
+isGameOver board 
+	| null (allMoves PlayerWhite board) && null (allMoves PlayerBlack board) = True
+	| otherwise = False
 
 -- ***
 -- Find out who wins the game.  
 -- Return Nothing in the case of a draw.
 -- Otherwise return Just the_Player
 winner :: Board -> Maybe Player
-winner b = Nothing
+winner board
+	| (whiteScore) > (blackScore) = Just PlayerWhite
+	| (whiteScore) < (blackScore) = Just PlayerBlack
+	| otherwise = Nothing
+	where 
+		whiteScore = score PlayerWhite board
+		blackScore = score PlayerBlack board
 
 
