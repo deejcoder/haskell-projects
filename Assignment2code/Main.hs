@@ -30,7 +30,6 @@ main = do
 -- execute a single turn
 turn :: Game -> Player -> IO ()
 turn lastMove player =
-	
 	-- game over
 	if isGameOver board then do
 		drawBoard board
@@ -51,18 +50,13 @@ turn lastMove player =
 	-- it is the computer's turn
 	else if player == computerPlayer then do
 		let (Game (Piece pos player') board') = aiMove lookahead player lastMove
-		drawBoard board
 		putStrLn$ (show computerPlayer) ++ " plays " ++ (posToCoord pos)
-		putStrLn$ (show (score player' board'))
-		putStrLn (show lastMove)
-		putStrLn( show ( pos ) )
 		turn (Game (Piece pos player') board') (otherPlayer player)
 
 	-- it is the human player's turn
 	else do
 		drawBoard board
 		move <- getValidMove
-		putStrLn (show move)
 		turn (Game move (makeMove move board)) (otherPlayer player)
 
 	-- helper function to validate a move

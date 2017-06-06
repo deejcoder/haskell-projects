@@ -72,8 +72,8 @@ type Board = [Piece]
 initialBoard :: Board
 initialBoard =
 	[
-		Piece (3,4) PlayerBlack, Piece (4,4) PlayerWhite,
-		Piece (3,3) PlayerWhite, Piece (4,3) PlayerBlack
+		Piece (3,4) PlayerWhite, Piece (4,4) PlayerBlack,
+		Piece (3,3) PlayerBlack, Piece (4,3) PlayerWhite
 	]
 
 
